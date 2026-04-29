@@ -1,4 +1,4 @@
-# Real-Time Healthcare Insurance Fraud Detection
+# Aura-Health: Real-Time Healthcare Insurance Fraud Detection
 
 This project is a prototype for real-time healthcare insurance claim validation. It detects suspicious claims before payout, identifies provider-level patterns, and preserves a tamper-proof audit trail for decisions.
 
