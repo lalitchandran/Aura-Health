@@ -1,0 +1,423 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Healthcare Fraud Detection SPA</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      background: radial-gradient(circle at top, rgba(67, 56, 202, 0.28), transparent 28%),
+                  radial-gradient(circle at bottom right, rgba(14, 165, 233, 0.14), transparent 36%),
+                  #0f172a;
+    }
+    .glass {
+      background: rgba(15, 23, 42, 0.72);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(148, 163, 184, 0.18);
+    }
+  </style>
+</head>
+<body class="min-h-screen text-slate-100 antialiased">
+  <div class="mx-auto max-w-screen-2xl px-4 py-6 sm:px-6 lg:px-8">
+    <header class="mb-6 flex flex-col gap-4 rounded-3xl border border-slate-700/80 bg-slate-950/60 p-6 shadow-2xl shadow-slate-950/40 lg:flex-row lg:items-end lg:justify-between">
+      <div>
+        <p class="text-sm uppercase tracking-[0.24em] text-cyan-300/80">Real-Time Healthcare Fraud Engine</p>
+        <h1 class="mt-3 text-4xl font-semibold tracking-tight text-white sm:text-5xl">Live Claim Simulator</h1>
+        <p class="mt-3 max-w-2xl text-slate-400">Submit claim data instantly, watch the engine evaluate fraud risk, and monitor activity in a dynamic single-page dashboard.</p>
+      </div>
+      <div class="space-y-2 text-right">
+        <p class="text-slate-300">Server status:</p>
+        <div id="server-status" class="inline-flex items-center rounded-full bg-slate-800/90 px-4 py-2 text-sm text-emerald-300 ring-1 ring-emerald-400/15">Checking...</div>
+      </div>
+    </header>
+
+    <div class="grid gap-6 xl:grid-cols-[340px_1fr]">
+      <aside class="glass rounded-3xl border border-slate-700/70 p-6 shadow-xl shadow-slate-950/20">
+        <div class="mb-6 flex items-center justify-between">
+          <div>
+            <h2 class="text-lg font-semibold text-white">Live Claim Simulator</h2>
+            <p class="mt-1 text-sm text-slate-400">Send a sample claim to the fraud engine instantly.</p>
+          </div>
+          <span class="rounded-full bg-indigo-500/10 px-3 py-1 text-xs uppercase tracking-[0.24em] text-indigo-300">SPA</span>
+        </div>
+
+        <form id="simulatorForm" class="space-y-5">
+          <div>
+            <label class="mb-2 block text-sm font-medium text-slate-300">Patient ID</label>
+            <input name="patient_id" type="text" required placeholder="PAT-001" class="w-full rounded-2xl border border-slate-700/90 bg-slate-900/90 px-4 py-3 text-slate-100 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20" />
+          </div>
+
+          <div>
+            <label class="mb-2 block text-sm font-medium text-slate-300">Provider ID</label>
+            <input name="provider_id" type="text" required placeholder="P002" class="w-full rounded-2xl border border-slate-700/90 bg-slate-900/90 px-4 py-3 text-slate-100 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20" />
+          </div>
+
+          <div class="grid gap-5 sm:grid-cols-2">
+            <div>
+              <label class="mb-2 block text-sm font-medium text-slate-300">Diagnosis Code</label>
+              <input name="diagnosis_code" type="text" required placeholder="D015" class="w-full rounded-2xl border border-slate-700/90 bg-slate-900/90 px-4 py-3 text-slate-100 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20" />
+            </div>
+
+            <div>
+              <label class="mb-2 block text-sm font-medium text-slate-300">Procedure Code</label>
+              <input name="procedure_code" type="text" required placeholder="PROC-121" class="w-full rounded-2xl border border-slate-700/90 bg-slate-900/90 px-4 py-3 text-slate-100 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20" />
+            </div>
+          </div>
+
+          <div>
+            <label class="mb-2 block text-sm font-medium text-slate-300">Billed Amount (₹)</label>
+            <input name="billed_amount" type="number" min="0" required placeholder="7800" class="w-full rounded-2xl border border-slate-700/90 bg-slate-900/90 px-4 py-3 text-slate-100 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20" />
+          </div>
+
+          <button type="submit" class="inline-flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-indigo-500 to-cyan-400 px-5 py-3 text-sm font-semibold uppercase tracking-[0.18em] text-slate-950 shadow-xl shadow-cyan-500/20 transition hover:scale-[1.01]">Run Real-Time Detection</button>
+        </form>
+
+        <div class="mt-8 rounded-3xl border border-slate-700/80 bg-slate-950/70 p-5">
+          <p class="text-sm font-semibold uppercase tracking-[0.18em] text-slate-400">Quick tips</p>
+          <ul class="mt-4 space-y-3 text-sm text-slate-300">
+            <li>Use realistic claim values.</li>
+            <li>Try duplicate and ghost procedure cases.</li>
+            <li>Watch the feed update instantly.</li>
+          </ul>
+        </div>
+      </aside>
+
+      <main class="space-y-6">
+        <section class="grid gap-6 lg:grid-cols-3">
+          <article class="glass rounded-3xl border border-slate-700/70 p-6 shadow-xl shadow-slate-950/20">
+            <p class="text-sm text-slate-400">Total claims</p>
+            <h3 id="totalClaims" class="mt-3 text-4xl font-semibold text-white">0</h3>
+          </article>
+
+          <article class="glass rounded-3xl border border-slate-700/70 p-6 shadow-xl shadow-slate-950/20">
+            <p class="text-sm text-slate-400">Fast-tracked</p>
+            <h3 id="fastTracked" class="mt-3 text-4xl font-semibold text-emerald-300">0</h3>
+          </article>
+
+          <article class="glass rounded-3xl border border-slate-700/70 p-6 shadow-xl shadow-slate-950/20">
+            <p class="text-sm text-slate-400">Rejected</p>
+            <h3 id="rejectedClaims" class="mt-3 text-4xl font-semibold text-rose-300">0</h3>
+          </article>
+        </section>
+
+        <section class="grid gap-6 lg:grid-cols-2">
+          <div class="glass rounded-3xl border border-slate-700/70 p-6 shadow-xl shadow-slate-950/20">
+            <div class="mb-4 flex items-center justify-between">
+              <div>
+                <h2 class="text-lg font-semibold text-white">Claim Type Trend</h2>
+                <p class="text-sm text-slate-400">Distribution across submitted claims.</p>
+              </div>
+            </div>
+            <canvas id="claimTypeChart" class="h-72 w-full"></canvas>
+          </div>
+
+          <div class="glass rounded-3xl border border-slate-700/70 p-6 shadow-xl shadow-slate-950/20">
+            <div class="mb-4 flex items-center justify-between">
+              <div>
+                <h2 class="text-lg font-semibold text-white">Decision Breakdown</h2>
+                <p class="text-sm text-slate-400">Fast-tracked versus reviewed and rejected.</p>
+              </div>
+            </div>
+            <canvas id="verdictChart" class="h-72 w-full"></canvas>
+          </div>
+        </section>
+
+        <section class="glass rounded-3xl border border-slate-700/70 p-6 shadow-xl shadow-slate-950/20">
+          <div class="mb-6 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <h2 class="text-lg font-semibold text-white">Claim Auditor</h2>
+              <p class="text-sm text-slate-400">Search by claim ID for a detailed fraud audit report.</p>
+            </div>
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <input id="auditClaimId" type="text" placeholder="Enter claim ID" class="w-full rounded-2xl border border-slate-700/80 bg-slate-950/70 px-4 py-3 text-sm text-slate-100 outline-none focus:border-sky-400 sm:w-72" />
+              <button id="auditButton" class="inline-flex items-center justify-center rounded-2xl bg-sky-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-sky-400">Run Audit</button>
+            </div>
+          </div>
+
+          <div id="auditReport" class="hidden divide-y divide-slate-700/70 rounded-3xl border border-slate-700/70 bg-slate-950/80 p-6 shadow-inner shadow-slate-950/20">
+            <div class="pb-6">
+              <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p class="text-sm text-slate-400">Audit status</p>
+                  <h3 id="auditStatus" class="mt-2 text-2xl font-semibold text-white">Pending</h3>
+                </div>
+                <span id="auditBadge" class="rounded-full bg-slate-800/90 px-3 py-1 text-xs uppercase tracking-[0.24em] text-slate-300">Awaiting search</span>
+              </div>
+              <p id="auditExplanation" class="text-sm leading-6 text-slate-300"></p>
+            </div>
+
+            <div class="grid gap-6 lg:grid-cols-2 pt-6">
+              <div class="rounded-3xl bg-slate-900/80 p-5">
+                <h4 class="text-sm font-semibold text-slate-300">Patient Profile</h4>
+                <p id="auditPatientName" class="mt-3 text-lg font-semibold text-white"></p>
+                <p id="auditPatientId" class="text-sm text-slate-400"></p>
+                <p id="auditPatientHistory" class="mt-4 text-sm text-slate-400"></p>
+              </div>
+
+              <div class="rounded-3xl bg-slate-900/80 p-5">
+                <h4 class="text-sm font-semibold text-slate-300">Provider Profile</h4>
+                <p id="auditProviderName" class="mt-3 text-lg font-semibold text-white"></p>
+                <p id="auditProviderId" class="text-sm text-slate-400"></p>
+                <p id="auditProviderVolume" class="mt-4 text-sm text-slate-400"></p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="glass rounded-3xl border border-slate-700/70 p-6 shadow-xl shadow-slate-950/20">
+          <div class="mb-6 flex items-center justify-between">
+            <div>
+              <h2 class="text-lg font-semibold text-white">Live Activity Feed</h2>
+              <p class="text-sm text-slate-400">Most recent claim evaluations appear here instantly.</p>
+            </div>
+            <span id="activityBadge" class="inline-flex rounded-full bg-slate-800/90 px-3 py-1 text-xs uppercase tracking-[0.24em] text-slate-300">0 events</span>
+          </div>
+          <div id="feedList" class="space-y-4"></div>
+        </section>
+      </main>
+    </div>
+
+    <div id="toastContainer" class="fixed bottom-6 right-6 z-50 flex flex-col gap-3"></div>
+  </div>
+
+  <script>
+    const baseUrl = '';
+    const state = {
+      total: 0,
+      fastTracked: 0,
+      rejected: 0,
+      reviewed: 0,
+      claimTypes: { inpatient: 0, outpatient: 0, diagnostic: 0 },
+      verdicts: { "Fast-tracked": 0, "Reviewed": 0, "Rejected": 0 }
+    };
+
+    const toastContainer = document.getElementById('toastContainer');
+    const activityFeed = document.getElementById('feedList');
+    const activityBadge = document.getElementById('activityBadge');
+    const totalClaimsEl = document.getElementById('totalClaims');
+    const fastTrackedEl = document.getElementById('fastTracked');
+    const rejectedEl = document.getElementById('rejectedClaims');
+
+    const auditClaimIdInput = document.getElementById('auditClaimId');
+    const auditButton = document.getElementById('auditButton');
+    const auditReport = document.getElementById('auditReport');
+    const auditStatus = document.getElementById('auditStatus');
+    const auditBadge = document.getElementById('auditBadge');
+    const auditExplanation = document.getElementById('auditExplanation');
+    const auditPatientName = document.getElementById('auditPatientName');
+    const auditPatientId = document.getElementById('auditPatientId');
+    const auditPatientHistory = document.getElementById('auditPatientHistory');
+    const auditProviderName = document.getElementById('auditProviderName');
+    const auditProviderId = document.getElementById('auditProviderId');
+    const auditProviderVolume = document.getElementById('auditProviderVolume');
+
+    const typeCtx = document.getElementById('claimTypeChart').getContext('2d');
+    const verdictCtx = document.getElementById('verdictChart').getContext('2d');
+
+    const claimTypeChart = new Chart(typeCtx, {
+      type: 'doughnut',
+      data: {
+        labels: Object.keys(state.claimTypes),
+        datasets: [{
+          data: Object.values(state.claimTypes),
+          backgroundColor: ['#818cf8', '#38bdf8', '#22c55e'],
+          borderColor: '#0f172a',
+          borderWidth: 2
+        }]
+      },
+      options: {
+        plugins: { legend: { labels: { color: '#cbd5e1' } } },
+        responsive: true
+      }
+    });
+
+    const verdictChart = new Chart(verdictCtx, {
+      type: 'bar',
+      data: {
+        labels: Object.keys(state.verdicts),
+        datasets: [{
+          label: 'Claims',
+          data: Object.values(state.verdicts),
+          backgroundColor: ['#22c55e', '#f59e0b', '#ef4444'],
+          borderRadius: 12,
+          maxBarThickness: 40
+        }]
+      },
+      options: {
+        scales: {
+          x: { ticks: { color: '#cbd5e1' }, grid: { display: false } },
+          y: { beginAtZero: true, ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(148, 163, 184, 0.2)' } }
+        },
+        plugins: { legend: { display: false } },
+        responsive: true
+      }
+    });
+
+    const updateKpis = () => {
+      totalClaimsEl.textContent = state.total;
+      fastTrackedEl.textContent = state.fastTracked;
+      rejectedEl.textContent = state.rejected;
+      activityBadge.textContent = `${activityFeed.children.length} events`;
+    };
+
+    const refreshCharts = () => {
+      claimTypeChart.data.datasets[0].data = Object.values(state.claimTypes);
+      verdictChart.data.datasets[0].data = Object.values(state.verdicts);
+      claimTypeChart.update();
+      verdictChart.update();
+    };
+
+    const showToast = (message, status = 'success') => {
+      const toast = document.createElement('div');
+      toast.className = `glass flex items-center justify-between gap-4 rounded-3xl border px-5 py-4 shadow-xl shadow-slate-950/25 ${status === 'success' ? 'border-emerald-400/20 bg-emerald-500/15 text-emerald-200' : 'border-rose-400/20 bg-rose-500/15 text-rose-200'}`;
+      toast.innerHTML = `<p class="text-sm font-medium">${message}</p>`;
+      toastContainer.appendChild(toast);
+      setTimeout(() => toast.remove(), 4200);
+    };
+
+    const addFeedItem = (payload) => {
+      const item = document.createElement('article');
+      item.className = 'rounded-3xl border border-slate-700/70 bg-slate-950/80 p-4 shadow-xl shadow-slate-950/15';
+      item.innerHTML = `
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <p class="text-sm text-slate-400">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</p>
+            <h3 class="mt-1 text-base font-semibold text-white">${payload.patient_id} → ${payload.decision}</h3>
+          </div>
+          <span class="rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] ${payload.decision === 'Rejected' ? 'bg-rose-500/15 text-rose-200' : payload.decision === 'Reviewed' ? 'bg-amber-500/15 text-amber-200' : 'bg-emerald-500/15 text-emerald-200'}">${payload.decision}</span>
+        </div>
+        <div class="mt-3 grid gap-2 text-sm text-slate-300 sm:grid-cols-2">
+          <div><span class="font-semibold text-slate-100">Provider:</span> ${payload.provider_id}</div>
+          <div><span class="font-semibold text-slate-100">Procedure:</span> ${payload.procedure_code}</div>
+          <div><span class="font-semibold text-slate-100">Diagnosis:</span> ${payload.diagnosis_code}</div>
+          <div><span class="font-semibold text-slate-100">Amount:</span> ₹${Number(payload.billed_amount).toFixed(2)}</div>
+        </div>
+        <p class="mt-3 text-sm text-slate-400">${payload.reasons ? payload.reasons.join(' • ') : 'No flags detected.'}</p>
+      `;
+      activityFeed.prepend(item);
+      if (activityFeed.children.length > 12) {
+        activityFeed.removeChild(activityFeed.lastChild);
+      }
+      updateKpis();
+    };
+
+    const updateStateMetrics = (decision, claimType) => {
+      state.total += 1;
+      if (decision === 'Fast-tracked') state.fastTracked += 1;
+      if (decision === 'Rejected') state.rejected += 1;
+      if (decision === 'Reviewed') state.reviewed += 1;
+      if (claimType && state.claimTypes.hasOwnProperty(claimType)) {
+        state.claimTypes[claimType] += 1;
+      }
+      if (state.verdicts.hasOwnProperty(decision)) {
+        state.verdicts[decision] += 1;
+      }
+      updateKpis();
+      refreshCharts();
+    };
+
+    const displayAuditResult = (audit) => {
+      auditReport.classList.remove('hidden');
+      auditStatus.textContent = audit.fraud_audit.status || 'Unknown';
+      auditBadge.textContent = audit.fraud_audit.rule_triggered || 'Audit complete';
+      auditExplanation.textContent = audit.fraud_audit.explanation || 'No explanation available.';
+      auditPatientName.textContent = audit.patient_profile.patient_name;
+      auditPatientId.textContent = `Patient ID: ${audit.patient_profile.patient_id}`;
+      auditPatientHistory.textContent = `Patient claims in database: ${audit.patient_profile.history_count}`;
+      auditProviderName.textContent = audit.provider_profile.provider_name;
+      auditProviderId.textContent = `Provider ID: ${audit.provider_profile.provider_id}`;
+      auditProviderVolume.textContent = `Provider claim volume: ${audit.provider_profile.recent_claim_volume}`;
+    };
+
+    const runClaimAudit = async () => {
+      const claimId = auditClaimIdInput.value.trim();
+      if (!claimId) {
+        showToast('Please enter a claim ID to audit.', 'error');
+        return;
+      }
+
+      try {
+        const response = await fetch(`${baseUrl}/api/audit/${encodeURIComponent(claimId)}`);
+        if (!response.ok) {
+          const error = await response.json().catch(() => ({}));
+          throw new Error(error.error || 'Audit lookup failed.');
+        }
+        const audit = await response.json();
+        displayAuditResult(audit);
+        showToast(`Audit loaded for ${claimId}.`, 'success');
+      } catch (error) {
+        showToast(error.message, 'error');
+      }
+    };
+
+    auditButton.addEventListener('click', runClaimAudit);
+    auditClaimIdInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        runClaimAudit();
+      }
+    });
+
+    document.getElementById('simulatorForm').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const form = event.target;
+      const formData = new FormData(form);
+      const payload = {
+        claim_id: `SIM-${Date.now()}`,
+        patient_id: formData.get('patient_id'),
+        provider_id: formData.get('provider_id'),
+        diagnosis_code: formData.get('diagnosis_code'),
+        procedure_code: formData.get('procedure_code'),
+        billed_amount: Number(formData.get('billed_amount')),
+        claim_type: 'outpatient',
+        admission_date: new Date().toISOString().slice(0, 10),
+        discharge_date: new Date().toISOString().slice(0, 10),
+        item_count: 1
+      };
+
+      try {
+        const response = await fetch(`${baseUrl}/submit-claim`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+          const error = await response.json().catch(() => ({}));
+          throw new Error(error.message || 'Claim submission failed.');
+        }
+
+        const data = await response.json();
+        const cleanDecision = data.decision || 'Reviewed';
+        const toastMessage = cleanDecision === 'Rejected' ? 'Fraud flagged: claim rejected.' : cleanDecision === 'Reviewed' ? 'Claim flagged for review.' : 'Claim fast-tracked successfully.';
+        showToast(toastMessage, cleanDecision === 'Rejected' ? 'error' : 'success');
+
+        addFeedItem({
+          ...payload,
+          decision: cleanDecision,
+          reasons: data.reasons || []
+        });
+        updateStateMetrics(cleanDecision, payload.claim_type);
+        form.reset();
+      } catch (error) {
+        showToast(error.message, 'error');
+      }
+    });
+
+    const pingServer = async () => {
+      try {
+        const response = await fetch(`${baseUrl}/health`);
+        const status = await response.json();
+        document.getElementById('server-status').textContent = status.status === 'ok' ? 'Connected' : 'Unavailable';
+      } catch {
+        document.getElementById('server-status').textContent = 'Offline';
+      }
+    };
+
+    pingServer();
+  </script>
+</body>
+</html>

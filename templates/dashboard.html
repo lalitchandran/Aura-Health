@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Healthcare Fraud Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f3f7fc; color: #222; }
+        .page { max-width: 1200px; margin: 0 auto; padding: 24px; }
+        h1 { margin-bottom: 8px; }
+        .header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; margin-top: 18px; }
+        .card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 1px 16px rgba(21, 46, 80, .08); }
+        .card strong { display: block; margin-bottom: 10px; color: #334155; }
+        .table-wrapper { margin-top: 24px; }
+        table { width: 100%; border-collapse: collapse; background: #fff; }
+        th, td { padding: 12px 10px; border-bottom: 1px solid #e2e8f0; text-align: left; }
+        th { background: #f8fafc; color: #0f172a; }
+        .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px; }
+        @media (max-width: 860px) { .chart-row { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+<div class="page">
+    <div class="header">
+        <div>
+            <h1>Healthcare Fraud Detection Dashboard</h1>
+            <p>Real-time statistics from the claim model and audit history.</p>
+        </div>
+        <div>
+            <strong>Endpoints</strong>
+            <div>/health | /submit-claim | /provider-summary | /audit-trail</div>
+        </div>
+    </div>
+
+    <div class="card-grid">
+        <div class="card"><strong>Total claims</strong><div>{{ totals.total_claims }}</div></div>
+        <div class="card"><strong>Providers</strong><div>{{ totals.provider_count }}</div></div>
+        <div class="card"><strong>Distinct patients</strong><div>{{ totals.patient_count }}</div></div>
+        <div class="card"><strong>Fast-tracked claims</strong><div>{{ totals.fast_tracked }}</div></div>
+        <div class="card"><strong>Reviewed claims</strong><div>{{ totals.review_count }}</div></div>
+        <div class="card"><strong>Rejected claims</strong><div>{{ totals.rejected }}</div></div>
+    </div>
+
+    <div class="chart-row">
+        <div class="card"><strong>Claim type distribution</strong><canvas id="claimTypeChart"></canvas></div>
+        <div class="card"><strong>Decision distribution</strong><canvas id="verdictChart"></canvas></div>
+    </div>
+
+    <div class="table-wrapper card">
+        <strong>Top provider risk summary</strong>
+        <table>
+            <thead>
+                <tr><th>Provider</th><th>Network</th><th>Claims</th><th>Avg billed</th><th>Unique patients</th></tr>
+            </thead>
+            <tbody>
+            {% for provider in provider_summary %}
+                <tr>
+                    <td>{{ provider.provider_id }}</td>
+                    <td>{{ provider.network }}</td>
+                    <td>{{ provider.claim_count }}</td>
+                    <td>₹{{ '%.2f' | format(provider.avg_amount) }}</td>
+                    <td>{{ provider.unique_patients }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="table-wrapper card">
+        <strong>Top procedures by frequency</strong>
+        <table>
+            <thead>
+                <tr><th>Procedure code</th><th>Count</th></tr>
+            </thead>
+            <tbody>
+            {% for code, count in top_procedures %}
+                <tr><td>{{ code }}</td><td>{{ count }}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+const claimTypeData = {{ claim_type_data | tojson }};
+const verdictData = {{ verdict_data | tojson }};
+
+new Chart(document.getElementById('claimTypeChart'), {
+    type: 'doughnut',
+    data: {
+        labels: Object.keys(claimTypeData),
+        datasets: [{ data: Object.values(claimTypeData), backgroundColor: ['#4f46e5','#2563eb','#14b8a6','#f59e0b','#ef4444'] }]
+    },
+    options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+});
+
+new Chart(document.getElementById('verdictChart'), {
+    type: 'bar',
+    data: {
+        labels: Object.keys(verdictData),
+        datasets: [{ label: 'Claims', data: Object.values(verdictData), backgroundColor: ['#10b981','#2563eb','#f59e0b','#ef4444'] }]
+    },
+    options: { responsive: true, scales: { y: { beginAtZero: true, precision: 0 } }, plugins: { legend: { display: false } } }
+});
+</script>
+</body>
+</html>
